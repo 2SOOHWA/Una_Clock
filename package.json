@@ -1,0 +1,32 @@
+{
+  "name": "una-clock",
+  "version": "1.0.0",
+  "description": "Una Alarm Clock",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron ."
+  },
+  "author": "2SOOHWA",
+  "license": "ISC",
+  
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/2SOOHWA/Una_Clock.git"
+  },
+  "build": {
+    "appId": "com.soohwa.unaclock",
+    "productName": "Una Clock",
+    "directories": {
+      "output": "dist"
+    },
+    "win": {
+      "target": "nsis",
+      "icon": "icon.ico" 
+    },
+    "publish": {
+      "provider": "github",
+      "owner": "2SOOHWA",
+      "repo": "Una_Clock"
+    }
+  }
+}

@@ -1,0 +1,637 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Usagi's Alarm Clock</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🐰</text></svg>">
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&family=VT323&display=swap" rel="stylesheet">
+    <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css" />
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body, html {
+            width: 100%;
+            height: 100%;
+            background-color: #ffffff; 
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden; 
+        }
+
+        /* 하늘색 사각형 틀 (최상위 기준 컨테이너) */
+        .mobile-screen {
+            position: relative; 
+            background-color: #8acbf7; 
+            aspect-ratio: 3 / 4;
+            width: 100%;
+            height: 100%;
+            max-width: 340px;
+            max-height: 500px;
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.12);
+            overflow: hidden;
+            container-type: inline-size; 
+        }
+
+        /* 하늘색 사각형 내부의 스케일업 블러 배경지 */
+        .mobile-screen::before {
+            content: "";
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background-image: url('img/01_set_timer.png'); 
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            transform: scale(1.2);        
+            filter: blur(25px) brightness(0.85); 
+            z-index: 0;                   
+            transition: background-image 0.4s ease; 
+        }
+
+        /* 알람이 완전히 끝났을 때 투명 배경도 빨간색 배경지로 자동 전환 */
+        .mobile-screen:has(.time-up)::before {
+            background-image: url('img/03_og_alarm_timer.jpg'); 
+        }
+
+        /* 상단 타이틀 */
+        .title {
+            position: absolute;
+            top: 7%;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 100%;
+            color: #ffffff;
+            font-family: 'Fredoka', 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji', sans-serif;
+            font-size: 7cqi; 
+            font-weight: 700;       
+            letter-spacing: 0.5px;   
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            text-align: center;
+        }
+
+        /* 메인 콘텐츠 구역 (노란색 사각형 위치) */
+        .content-area {
+            position: absolute;
+            top: 18%;
+            left: 0;
+            width: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;     
+        }
+
+        .yellow-box {
+            aspect-ratio: 1080 / 580; 
+            width: 100%; 
+            max-width: 1080px;
+            max-height: 580px;
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15); 
+            position: relative; 
+            transition: all 0.4s ease; 
+            overflow: hidden;
+            background-image: url('img/01_set_timer.png');
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+        }
+
+        .yellow-box.time-up {
+            background-image: url('img/03_og_alarm_timer.jpg'); 
+        }
+
+        /* 옛날 전자시계 스타일 타이머 폰트 세팅 */
+        .timer-display {
+            color: #4a4a4a;
+            font-family: 'VT323', monospace;
+            font-size: 8cqi; 
+            font-weight: 600; 
+            display: flex;
+            gap: 4px; 
+            position: absolute; 
+            bottom: 14.5%;      
+            left: 57.5%;      
+            z-index: 1; 
+            background-color: rgba(0, 0, 0, 0); 
+            padding: 0.1em 0.5em; 
+            border-radius: 0.3em;
+        }
+
+        .yellow-box.time-up .timer-display {
+            color: #ffffff;
+        }
+
+        /* 하단 제어 구역 고정 */
+        .bottom-area {
+            position: absolute;
+            top: 59%; 
+            left: 0;
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            gap: 4cqi;       
+            padding: 0 8cqi; 
+        }
+
+        .control-area, .action-area {
+            width: 100%;
+            display: flex;
+            justify-content: center;
+            gap: 3cqi; 
+        }
+
+        .column-box {
+            flex: 1; 
+            max-width: 28cqi; 
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .control-group {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 1.5cqi;
+            width: 100%;
+        }
+
+        /* 분/초 라벨 폰트 */
+        .control-label {
+            color: #ffffff;
+            font-family: 'Fredoka', sans-serif;
+            font-size: 3.5cqi; 
+            font-weight: bold;
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+        }
+
+        /* 공통 버튼 스타일 */
+        .btn {
+            border: 2px solid #ffffff;
+            border-radius: 3.5cqi; 
+            font-family: 'Fredoka', sans-serif;
+            font-weight: 700;
+            cursor: pointer;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            transition: all 0.2s ease;
+            outline: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        .control-btn {
+            background-color: rgba(255, 255, 255, 0.25); 
+            width: 100%;
+            max-width: 18cqi; 
+            height: 10cqi;
+            font-size: 4cqi;
+            color: #ffffff;
+        }
+
+        .action-btn {
+            width: 28cqi;
+            height: 11.5cqi;
+            font-size: 4.5cqi;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+        }
+
+        #resetBtn {
+            background-color: rgba(255, 255, 255, 0.15);
+            color: #ffffff;
+        }
+
+        #startBtn {
+            background-color: #ffffff;
+            color: #F4BE62; 
+        }
+
+        .btn:active { transform: scale(0.95); }
+        
+        #startBtn:active { 
+            background-color: #FFF9ED; 
+            color: #E0A644; 
+        }
+        
+        #resetBtn:active { background-color: rgba(255, 255, 255, 0.4); }
+
+        /* 볼륨 조절 슬라이더 구역 패널 */
+        .volume-area {
+            width: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 3.5cqi;
+            margin-top: 1.5cqi; 
+            background-color: rgba(255, 255, 255, 0.25); 
+            backdrop-filter: blur(4px); 
+            -webkit-backdrop-filter: blur(4px);
+            border-radius: 4cqi; 
+            padding: 3cqi 4.5cqi; 
+            box-shadow: inset 0 1px 2px rgba(255, 255, 255, 0.2), 0 4px 12px rgba(0, 0, 0, 0.03);
+        }
+
+        /* 아이콘 오버레이 부모 컨테이너 */
+        .volume-icon-wrapper {
+            position: relative;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 5cqi;  
+            height: 5cqi;
+        }
+
+        .volume-icon {
+            font-size: 4.5cqi;
+            color: #ffffff;
+            user-select: none;
+            filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.05));
+        }
+
+        /* 🎯 [변경/추가] 통통 튀며 나타나는 ❌ 가위표 스타일 및 기본값(숨김) 설정 */
+        .volume-icon-wrapper::after {
+            content: "❌";
+            font-family: 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji', sans-serif;
+            position: absolute;
+            font-size: 3.5cqi; 
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) scale(0); /* 처음엔 크기가 0 */
+            opacity: 0;
+            pointer-events: none;
+            transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.1s ease; /* 스프링 바운스 애니메이션 */
+        }
+
+        /* 🎯 [변경/추가] 음소거 상태(.muted)가 되면 커지면서 팝업 연출 */
+        .volume-icon-wrapper.muted::after {
+            opacity: 1;
+            transform: translate(-50%, -50%) scale(1); /* 원래 크기로 팝업 */
+            animation: popMute 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+        }
+
+        /* 🎯 [변경/추가] 튕기는 느낌을 더 정밀하게 주기 위한 keyframes 정의 */
+        @keyframes popMute {
+            0% { transform: translate(-50%, -50%) scale(0); }
+            70% { transform: translate(-50%, -50%) scale(1.2); } /* 살짝 크게 튕겼다가 */
+            100% { transform: translate(-50%, -50%) scale(1); } /* 정사이즈로 고정 */
+        }
+
+        .volume-slider {
+            flex: 1;
+            -webkit-appearance: none;
+            appearance: none;
+            height: 1.5cqi; 
+            border-radius: 1cqi;
+            background: rgba(255, 255, 255, 0.4); 
+            outline: none;
+            cursor: pointer;
+            transition: background 0.2s ease;
+        }
+
+        .volume-slider:hover {
+            background: rgba(255, 255, 255, 0.6);
+        }
+
+        /* 슬라이더 원형 손잡이 */
+        .volume-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 4cqi;
+            height: 4cqi;
+            border-radius: 50%;
+            background: #ffffff; 
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.12);
+            transition: transform 0.1s ease;
+        }
+        .volume-slider::-webkit-slider-thumb:active {
+            transform: scale(1.2); 
+        }
+
+        .volume-slider::-moz-range-thumb {
+            width: 4cqi;
+            height: 4cqi;
+            border: none;
+            border-radius: 50%;
+            background: #ffffff;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.12);
+            transition: transform 0.1s ease;
+        }
+        .volume-slider::-moz-range-thumb:active {
+            transform: scale(1.2);
+        }
+
+        /* 팝업창(모달) 서체 */
+        .modal-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.4); 
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 10;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+        }
+
+        .modal-overlay.active { opacity: 1; pointer-events: auto; }
+        
+        .modal-box {
+            background-color: #ffffff;
+            width: 80%;
+            padding: 24px;
+            border-radius: 24px;
+            text-align: center;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+            transform: scale(0.8);
+            transition: transform 0.3s ease;
+        }
+        .modal-overlay.active .modal-box { transform: scale(1); }
+        
+        .modal-title { 
+            font-family: 'Pretendard', -apple-system, sans-serif; 
+            font-size: 1.2rem; 
+            font-weight: bold; 
+            color: #333333; 
+            margin-bottom: 12px; 
+        }
+
+        .emoji-font {
+            font-family: 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji', sans-serif !important;
+        }
+        
+        .modal-text { 
+            font-family: 'Pretendard', -apple-system, sans-serif; 
+            font-size: 1.3rem; 
+            font-weight: 700; 
+            color: #8acbf7; 
+            margin-bottom: 24px; 
+            line-height: 1.4; 
+            word-break: keep-all; 
+        }
+        
+        .modal-close-btn { 
+            background-color: #FFE66D; 
+            border: none; 
+            color: #4a4a4a; 
+            width: 100%; 
+            height: 45px; 
+            border-radius: 12px; 
+            font-family: 'Pretendard', -apple-system, sans-serif; 
+            font-size: 1rem; 
+            font-weight: bold; 
+            cursor: pointer; 
+            box-shadow: 0 4px 10px rgba(0,0,0,0.05); 
+        }
+        .modal-close-btn:active { transform: scale(0.98); background-color: #ffd83b; }
+    </style>
+</head>
+<body>
+
+    <div class="mobile-screen">
+        <div id="alarmModal" class="modal-overlay">
+            <div class="modal-box">
+                <p class="modal-title">
+                    <span class="emoji-font" id="modalEmojiLeft">⏰</span> 
+                    <span id="modalTitleText">Title</span> 
+                    <span class="emoji-font" id="modalEmojiRight">⏰</span>
+                </p>
+                <p id="modalText" class="modal-text">context</p>
+                <button class="modal-close-btn" onclick="closeModal()">confirm</button>
+            </div>
+        </div>
+
+        <h1 class="title">Usagi's Alarm Clock</h1>
+
+        <div class="content-area">
+            <div id="displayBox" class="yellow-box">
+                <div class="timer-display">
+                    <span id="minutes">00</span>
+                    <span>:</span>
+                    <span id="seconds">00</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="bottom-area">
+            <div class="control-area">
+                <div class="column-box">
+                    <div class="control-group">
+                        <span class="control-label">MIN</span>
+                        <button class="btn control-btn" onclick="addMinute()">+1m</button>
+                    </div>
+                </div>
+                <div class="column-box">
+                    <div class="control-group">
+                        <span class="control-label">SEC</span>
+                        <button class="btn control-btn" onclick="addSecond()">+10s</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="action-area">
+                <button id="resetBtn" class="btn action-btn" onclick="resetTimer()">RESET</button>
+                <button id="startBtn" class="btn action-btn" onclick="toggleTimer()">START</button>
+            </div>
+
+            <div class="volume-area">
+                <div id="volumeIconWrapper" class="volume-icon-wrapper">
+                    <span class="volume-icon">📢</span>
+                </div>
+                <input id="volumeSlider" class="volume-slider" type="range" min="0" max="1" step="0.01" value="1" oninput="setVolume(this.value)">
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let min = 0; let sec = 0; let timerInterval = null; let isRunning = false; let isTimeUpState = false; 
+        const minDisplay = document.getElementById('minutes'); const secDisplay = document.getElementById('seconds');
+        const startBtn = document.getElementById('startBtn'); const alarmModal = document.getElementById('alarmModal');
+        const displayBox = document.getElementById('displayBox'); const modalTitle = document.getElementById('modalTitle'); const modalText = document.getElementById('modalText');
+        
+        const modalCloseBtn = document.querySelector('.modal-close-btn');
+        const volumeIconWrapper = document.getElementById('volumeIconWrapper');
+
+        const soundU = new Audio('sound/u.wav'); const soundNa = new Audio('sound/na.wav');
+        const soundFinish1 = new Audio('sound/finish.wav'); const soundFinish2 = new Audio('sound/finish.wav');
+
+        const startPauseAudio = new Audio('sound/una.wav');
+        const resetAudio = new Audio('sound/furu.wav');
+        const soundHa = new Audio('sound/ha.wav');
+
+        let fadeInterval = null; 
+
+        const allAudioElements = [soundU, soundNa, soundFinish1, soundFinish2, startPauseAudio, resetAudio, soundHa];
+        let currentGlobalVolume = 1; 
+
+        function setVolume(val) {
+            currentGlobalVolume = parseFloat(val);
+            
+            if (currentGlobalVolume === 0) {
+                volumeIconWrapper.classList.add('muted');
+            } else {
+                volumeIconWrapper.classList.remove('muted');
+            }
+
+            allAudioElements.forEach(audio => {
+                if (audio !== soundFinish1 && audio !== soundFinish2) {
+                    audio.volume = currentGlobalVolume;
+                } else if (fadeInterval === null) {
+                    audio.volume = currentGlobalVolume;
+                }
+            });
+        }
+        
+        setVolume(currentGlobalVolume);
+
+        function formatNumber(num) { return num < 10 ? '0' + num : num; }
+        function updateDisplay() { minDisplay.textContent = formatNumber(min); secDisplay.textContent = formatNumber(sec); }
+        
+        function addMinute() { 
+            if (isRunning) return; 
+            startPauseAudio.currentTime = 0;
+            startPauseAudio.play();
+            min += 1; 
+            if (min >= 100) min = 0; 
+            updateDisplay(); 
+        }
+        
+        function addSecond() { 
+            if (isRunning) return; 
+            startPauseAudio.currentTime = 0;
+            startPauseAudio.play();
+            sec += 10; 
+            if (sec >= 60) { min += Math.floor(sec / 60); sec = sec % 60; } 
+            if (min >= 100) min = 0; 
+            updateDisplay(); 
+        }
+
+        function playFinishSoundWithFade() {
+            let currentAudio = soundFinish1; let nextAudio = soundFinish2;
+            currentAudio.currentTime = 0; 
+            currentAudio.volume = currentGlobalVolume; 
+            currentAudio.play();
+            
+            fadeInterval = setInterval(() => {
+                let duration = currentAudio.duration; let currentTime = currentAudio.currentTime;
+                if (isNaN(duration)) return;
+                if (duration - currentTime <= 0.1) {
+                    nextAudio.currentTime = 0; 
+                    nextAudio.volume = currentGlobalVolume; 
+                    nextAudio.play();
+                    let fadingAudio = currentAudio;
+                    
+                    let innerFade = setInterval(() => { 
+                        if (fadingAudio.volume > 0.05) { 
+                            fadingAudio.volume -= 0.05; 
+                        } else { 
+                            fadingAudio.pause(); 
+                            clearInterval(innerFade); 
+                        } 
+                    }, 30);
+                    let temp = currentAudio; currentAudio = nextAudio; nextAudio = temp;
+                }
+            }, 50);
+        }
+
+        function toggleTimer() {
+            startPauseAudio.currentTime = 0;
+            startPauseAudio.play();
+
+            if (min === 0 && sec === 0 && !isRunning) {
+                isTimeUpState = false; 
+                // 🎯 이모지와 텍스트를 각각 안전하게 매칭
+                document.getElementById('modalEmojiLeft').textContent = "⚠️";
+                document.getElementById('modalEmojiRight').textContent = "⚠️";
+                document.getElementById('modalTitleText').textContent = " NOTICE ";
+    
+                modalText.textContent = "Set the Time First !";
+                modalText.style.color = "#ff6b6b"; 
+                modalCloseBtn.textContent = "GOT IT"; 
+                alarmModal.classList.add('active');
+                return;
+            }
+            
+            if (!isRunning) {
+                isRunning = true;
+                startBtn.textContent = "PAUSE";
+                startBtn.style.backgroundColor = "rgba(255, 255, 255, 0.4)";
+                startBtn.style.color = "#ffffff";
+                
+                timerInterval = setInterval(() => {
+                    if (sec === 0) {
+                        if (min === 0) {
+                            clearInterval(timerInterval); 
+                            isRunning = false; 
+                            minDisplay.textContent = "00";
+                            secDisplay.textContent = "00";
+                            displayBox.classList.add('time-up'); 
+                            playFinishSoundWithFade(); 
+                            isTimeUpState = true; 
+    
+                            // 🎯 이모지와 텍스트를 각각 안전하게 매칭
+                            document.getElementById('modalEmojiLeft').textContent = "⏰";
+                            document.getElementById('modalEmojiRight').textContent = "⏰";
+                            document.getElementById('modalTitleText').textContent = " ALARM ";
+    
+                            modalText.textContent = "Time's Up !"; 
+                            modalText.style.color = "#ff6b6b"; 
+                            modalCloseBtn.textContent = "DONE"; 
+                            alarmModal.classList.add('active');
+                            return;
+                        } else { min--; sec = 59; }
+                    } else { sec--; }
+                    
+                    let totalSeconds = (min * 60) + sec;
+                    if (totalSeconds <= 10 && totalSeconds > 0) { if (totalSeconds % 2 === 0) { soundU.currentTime = 0; soundU.play(); } else { soundNa.currentTime = 0; soundNa.play(); } }
+                    updateDisplay();
+                }, 1000); 
+            } else { 
+                clearInterval(timerInterval); 
+                isRunning = false; 
+                startBtn.textContent = "START"; 
+                startBtn.style.backgroundColor = "#ffffff"; 
+                startBtn.style.color = "#F4BE62"; 
+            }
+        }
+
+        function closeModal() { 
+            if (isTimeUpState) { 
+                resetAudio.currentTime = 0;
+                resetAudio.play(); 
+                clearInterval(fadeInterval); 
+                fadeInterval = null; 
+                soundFinish1.pause(); soundFinish1.currentTime = 0; 
+                soundFinish2.pause(); soundFinish2.currentTime = 0; 
+                resetTimer(); 
+            } else {
+                soundHa.currentTime = 0;
+                soundHa.play(); 
+            }
+            alarmModal.classList.remove('active'); 
+        }
+        
+        function resetTimer() {
+            resetAudio.currentTime = 0;
+            resetAudio.play();
+            clearInterval(timerInterval); 
+            if(fadeInterval) { clearInterval(fadeInterval); fadeInterval = null; }
+            isRunning = false; min = 0; sec = 0; displayBox.classList.remove('time-up');
+            soundU.pause(); soundU.currentTime = 0; soundNa.pause(); soundNa.currentTime = 0; soundFinish1.pause(); soundFinish1.currentTime = 0; soundFinish2.pause(); soundFinish2.currentTime = 0;
+            updateDisplay(); 
+            startBtn.textContent = "START"; 
+            startBtn.style.backgroundColor = "#ffffff"; 
+            startBtn.style.color = "#F4BE62"; 
+            alarmModal.classList.remove('active');
+        }
+    </script>
+</body>
+</html>
