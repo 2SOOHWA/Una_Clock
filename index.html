@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Usagi's Alarm Clock</title>
+    <title>Una Clock</title>
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🐰</text></svg>">
     <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&family=VT323&display=swap" rel="stylesheet">
     <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css" />
@@ -23,6 +23,13 @@
             justify-content: center;
             align-items: center;
             overflow: hidden; 
+
+            /* 🎯 글자 드래그를 완전히 막아주는 무적의 속성 */
+            -webkit-user-select: none;  /* 일렉트론(크로미움) 환경 필수 */
+            user-select: none;          /* 표준 속성 */
+
+            /* 마우스 커서가 텍스트 선택 모양(I)으로 바뀌는 것도 방지 */
+            cursor: default;
         }
 
         /* 하늘색 사각형 틀 (최상위 기준 컨테이너) */
@@ -112,7 +119,7 @@
             font-size: 8cqi; 
             font-weight: 600; 
             display: flex;
-            gap: 4px; 
+            gap: 3px; 
             position: absolute; 
             bottom: 14.5%;      
             left: 57.5%;      
@@ -244,6 +251,7 @@
             justify-content: center;
             width: 5cqi;  
             height: 5cqi;
+            cursor: pointer;
         }
 
         .volume-icon {
@@ -452,7 +460,13 @@
     </div>
 
     <script>
-        let min = 0; let sec = 0; let timerInterval = null; let isRunning = false; let isTimeUpState = false; 
+        let min = 0; 
+        let sec = 0; 
+        let timerInterval = null; 
+        let isRunning = false; 
+        let isTimeUpState = false; 
+        let savedVolume = 1; // 음소거 전 볼륨을 저장할 변수
+
         const minDisplay = document.getElementById('minutes'); const secDisplay = document.getElementById('seconds');
         const startBtn = document.getElementById('startBtn'); const alarmModal = document.getElementById('alarmModal');
         const displayBox = document.getElementById('displayBox'); const modalTitle = document.getElementById('modalTitle'); const modalText = document.getElementById('modalText');
@@ -463,13 +477,13 @@
         const soundU = new Audio('sound/u.wav'); const soundNa = new Audio('sound/na.wav');
         const soundFinish1 = new Audio('sound/finish.wav'); const soundFinish2 = new Audio('sound/finish.wav');
 
-        const startPauseAudio = new Audio('sound/una.wav');
-        const resetAudio = new Audio('sound/furu.wav');
+        const soundUna = new Audio('sound/una.wav');
+        const soundFuru = new Audio('sound/furu.wav');
         const soundHa = new Audio('sound/ha.wav');
 
         let fadeInterval = null; 
 
-        const allAudioElements = [soundU, soundNa, soundFinish1, soundFinish2, startPauseAudio, resetAudio, soundHa];
+        const allAudioElements = [soundU, soundNa, soundFinish1, soundFinish2, soundUna, soundFuru, soundHa];
         let currentGlobalVolume = 1; 
 
         function setVolume(val) {
@@ -490,6 +504,18 @@
             });
         }
         
+        document.getElementById('volumeIconWrapper').addEventListener('click', () => {
+            const slider = document.getElementById('volumeSlider');
+            if (currentGlobalVolume > 0) {
+                savedVolume = currentGlobalVolume;
+                setVolume(0);
+                slider.value = 0;
+            } else {
+                setVolume(savedVolume);
+                slider.value = savedVolume;
+            }
+        });
+
         setVolume(currentGlobalVolume);
 
         function formatNumber(num) { return num < 10 ? '0' + num : num; }
@@ -497,8 +523,8 @@
         
         function addMinute() { 
             if (isRunning) return; 
-            startPauseAudio.currentTime = 0;
-            startPauseAudio.play();
+            soundUna.currentTime = 0;
+            soundUna.play();
             min += 1; 
             if (min >= 100) min = 0; 
             updateDisplay(); 
@@ -506,8 +532,8 @@
         
         function addSecond() { 
             if (isRunning) return; 
-            startPauseAudio.currentTime = 0;
-            startPauseAudio.play();
+            soundUna.currentTime = 0;
+            soundUna.play();
             sec += 10; 
             if (sec >= 60) { min += Math.floor(sec / 60); sec = sec % 60; } 
             if (min >= 100) min = 0; 
@@ -523,15 +549,15 @@
             fadeInterval = setInterval(() => {
                 let duration = currentAudio.duration; let currentTime = currentAudio.currentTime;
                 if (isNaN(duration)) return;
-                if (duration - currentTime <= 0.1) {
+                if (duration - currentTime <= 0.07) {
                     nextAudio.currentTime = 0; 
                     nextAudio.volume = currentGlobalVolume; 
                     nextAudio.play();
                     let fadingAudio = currentAudio;
                     
                     let innerFade = setInterval(() => { 
-                        if (fadingAudio.volume > 0.05) { 
-                            fadingAudio.volume -= 0.05; 
+                        if (fadingAudio.volume > 0.1) { 
+                            fadingAudio.volume -= 0.1; 
                         } else { 
                             fadingAudio.pause(); 
                             clearInterval(innerFade); 
@@ -543,11 +569,11 @@
         }
 
         function toggleTimer() {
-            startPauseAudio.currentTime = 0;
-            startPauseAudio.play();
 
-            if (min === 0 && sec === 0 && !isRunning) {
-                isTimeUpState = false; 
+            if (min === 0 && sec === 0 && !isRunning && isTimeUpState === false) {
+                soundHa.currentTime = 0;
+                soundHa.play();
+
                 // 🎯 이모지와 텍스트를 각각 안전하게 매칭
                 document.getElementById('modalEmojiLeft').textContent = "⚠️";
                 document.getElementById('modalEmojiRight').textContent = "⚠️";
@@ -560,7 +586,18 @@
                 return;
             }
             
+            // 만약 시간이 00:00인데 이미 알람이 한번 끝난 상태였다면
+            // 리셋 없이 다시 시작할 수 있도록 isTimeUpState를 초기화해줍니다.
+            if (min === 0 && sec === 0 && isTimeUpState === true) {
+                isTimeUpState = false;
+                displayBox.classList.remove('time-up');
+            }
+
             if (!isRunning) {
+                // 🎯 스타트 상태가 될 때만 원래 소리(una.wav) 재생!
+                soundUna.currentTime = 0;
+                soundUna.play();
+
                 isRunning = true;
                 startBtn.textContent = "PAUSE";
                 startBtn.style.backgroundColor = "rgba(255, 255, 255, 0.4)";
@@ -595,6 +632,10 @@
                     updateDisplay();
                 }, 1000); 
             } else { 
+                // 🎯 퍼즈(일시정지) 상태가 될 때만 ha 사운드(ha.wav) 찰지게 재생!
+                soundHa.currentTime = 0;
+                soundHa.play();
+
                 clearInterval(timerInterval); 
                 isRunning = false; 
                 startBtn.textContent = "START"; 
@@ -605,23 +646,24 @@
 
         function closeModal() { 
             if (isTimeUpState) { 
-                resetAudio.currentTime = 0;
-                resetAudio.play(); 
+                soundFuru.currentTime = 0;
+                soundFuru.play(); 
                 clearInterval(fadeInterval); 
                 fadeInterval = null; 
                 soundFinish1.pause(); soundFinish1.currentTime = 0; 
                 soundFinish2.pause(); soundFinish2.currentTime = 0; 
+                isTimeUpState = false;
                 resetTimer(); 
             } else {
-                soundHa.currentTime = 0;
-                soundHa.play(); 
+                soundUna.currentTime = 0;
+                soundUna.play(); 
             }
             alarmModal.classList.remove('active'); 
         }
         
         function resetTimer() {
-            resetAudio.currentTime = 0;
-            resetAudio.play();
+            soundFuru.currentTime = 0;
+            soundFuru.play();
             clearInterval(timerInterval); 
             if(fadeInterval) { clearInterval(fadeInterval); fadeInterval = null; }
             isRunning = false; min = 0; sec = 0; displayBox.classList.remove('time-up');
