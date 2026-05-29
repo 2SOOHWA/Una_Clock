@@ -4,7 +4,8 @@
   "description": "Una Alarm Clock",
   "main": "main.js",
   "scripts": {
-    "start": "electron ."
+    "start": "electron .",
+    "build": "electron-builder --windows --publish always"
   },
   "author": "2SOOHWA",
   "license": "ISC",
@@ -30,5 +31,8 @@
   },
   "devDependencies": {
     "electron-builder": "^26.8.1"
+  },
+  "dependencies": {
+    "electron": "^42.3.0"
   }
 }
