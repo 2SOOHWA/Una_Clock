@@ -366,7 +366,7 @@
         
         .modal-title { 
             font-family: 'Pretendard', -apple-system, sans-serif; 
-            font-size: 1.2rem; 
+            font-size: 1.3rem; 
             font-weight: bold; 
             color: #333333; 
             margin-bottom: 12px; 
@@ -378,7 +378,7 @@
         
         .modal-text { 
             font-family: 'Pretendard', -apple-system, sans-serif; 
-            font-size: 1.3rem; 
+            font-size: 1.15rem; 
             font-weight: 700; 
             color: #8acbf7; 
             margin-bottom: 24px; 
@@ -409,8 +409,8 @@
             <div class="modal-box">
                 <p class="modal-title">
                     <span class="emoji-font" id="modalEmojiLeft">⏰</span> 
-                    <span id="modalTitleText">Title</span> 
-                    <span class="emoji-font" id="modalEmojiRight">⏰</span>
+                    <span id="modalTitleText"></span> 
+                    <span class="emoji-font" id="modalEmojiRight"></span>
                 </p>
                 <p id="modalText" class="modal-text">context</p>
                 <button class="modal-close-btn" onclick="closeModal()">confirm</button>
@@ -556,8 +556,8 @@
                     let fadingAudio = currentAudio;
                     
                     let innerFade = setInterval(() => { 
-                        if (fadingAudio.volume > 0.1) { 
-                            fadingAudio.volume -= 0.1; 
+                        if (fadingAudio.volume > 0.5) { 
+                            fadingAudio.volume -= 0.5; 
                         } else { 
                             fadingAudio.pause(); 
                             clearInterval(innerFade); 
@@ -576,8 +576,8 @@
 
                 // 🎯 이모지와 텍스트를 각각 안전하게 매칭
                 document.getElementById('modalEmojiLeft').textContent = "⚠️";
-                document.getElementById('modalEmojiRight').textContent = "⚠️";
-                document.getElementById('modalTitleText').textContent = " NOTICE ";
+                /* document.getElementById('modalEmojiRight').textContent = "⚠️"; */
+                /* document.getElementById('modalTitleText').textContent = " NOTICE "; */
     
                 modalText.textContent = "Set the Time First !";
                 modalText.style.color = "#ff6b6b"; 
@@ -616,8 +616,8 @@
     
                             // 🎯 이모지와 텍스트를 각각 안전하게 매칭
                             document.getElementById('modalEmojiLeft').textContent = "⏰";
-                            document.getElementById('modalEmojiRight').textContent = "⏰";
-                            document.getElementById('modalTitleText').textContent = " ALARM ";
+                            /* document.getElementById('modalEmojiRight').textContent = "⏰"; */
+                            /* document.getElementById('modalTitleText').textContent = " ALARM "; */
     
                             modalText.textContent = "Time's Up !"; 
                             modalText.style.color = "#ff6b6b"; 
