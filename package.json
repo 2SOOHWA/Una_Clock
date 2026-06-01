@@ -1,6 +1,6 @@
 {
   "name": "una-clock",
-  "version": "1.0.6",
+  "version": "1.0.7",
   "description": "Una Alarm Clock",
   "main": "main.js",
   "scripts": {
@@ -21,7 +21,7 @@
     },
     "win": {
       "target": "nsis",
-      "icon": "img/icon.ico"
+      "icon": "img/icon2.ico"
     },
     "publish": {
       "provider": "github",
