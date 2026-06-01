@@ -17,6 +17,7 @@ function createWindow () {
       // 로컬 파일들을 안전하게 로드하기 위한 설정
       nodeIntegration: false,
       contextIsolation: false,
+      backgroundThrottling: false
     }
   })
 
