@@ -6,6 +6,8 @@ function createWindow () {
     // 🎯 소프트웨어가 처음 켜질 때의 창 크기 (하늘색 사각형 비율에 맞춤)
     width: 340,
     height: 500,
+
+    icon: path.join(__dirname, 'img/icon2.ico'),
     
     // 창 크기를 마음대로 조절할 수 있게 할지 여부 (false로 하면 크기 고정)
     resizable: false, 
